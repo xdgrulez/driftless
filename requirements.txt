@@ -6,6 +6,3 @@ lancedb==0.38.0
 
 # client.py
 mcp==2.1.1
-
-# driftless_retriever.py, retriever.py
-llama-index-core==0.14.24

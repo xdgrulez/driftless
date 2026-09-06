@@ -2,6 +2,7 @@ from typing import TypedDict
 
 import lancedb
 from lancedb.embeddings import get_registry
+from lancedb.index import BTree
 from lancedb.pydantic import LanceModel, Vector
 from mcp.server.mcpserver import MCPServer
 from kafi.streams.streams import Streams
@@ -49,28 +50,48 @@ class CustomerContextResult(TypedDict):
 
 dbConnection = lancedb.connect("./lancedb_data")
 table = dbConnection.create_table("customer_context", schema=CustomerContext, mode="overwrite")
+table.create_index("id", config=BTree())
 
-def lancedb_upsert_sink(m_list):
-    d_list = []
-    for m in m_list:
+def lancedb_upsert_sink(m_w_tuple_list):
+    add_order_id_str_d_dict = {}
+    delete_order_id_str_set = set()
+    for m, w in m_w_tuple_list:
         v = m["value"]
-        order_id = f"order_{v['order_id']}"
-        text_str = f"Order #{v['order_id']} for Customer {v['name']} (ID: {v['customer_id']}) status: {v['status']}, amount: {v['amount']} EUR"
-        
-        d = {
-            "id": order_id,
-            "text": text_str,
-            "customer_id": str(v["customer_id"]),
-        }
+        order_id_str = f"order_{v['order_id']}"
+        #
+        if w == 1:
+            text_str = f"Order #{v['order_id']} for Customer {v['name']} (ID: {v['customer_id']}) status: {v['status']}, amount: {v['amount']} EUR"
+            
+            d = {
+                "id": order_id_str,
+                "text": text_str,
+                "customer_id": str(v["customer_id"]),
+            }
     
-        d_list.append(d)
+            add_order_id_str_d_dict[order_id_str] = d
+        elif w == -1:
+            delete_order_id_str_set.add(order_id_str)
 
-        print(f"Upserting: {d}")
+    order_id_str_list = list(delete_order_id_str_set)
+    print()
+    print(f"Deleting: {order_id_str_list}")
+    if order_id_str_list:
+        ids_sql_str = ", ".join(f"'{i}'" for i in order_id_str_list)
+        print()
+        print(f"Deleting: {order_id_str_list}")
+        table.delete(f"id IN ({ids_sql_str})")
 
+    d_list = list(add_order_id_str_d_dict.values())
+    print()
+    print(f"Merge inserting: {d_list}")
     table.merge_insert("id") \
         .when_matched_update_all() \
         .when_not_matched_insert_all() \
         .execute(d_list)
+
+    x = table.to_pandas()
+    print(x)
+
 
 c = Cluster({"kafka": {"bootstrap.servers": "localhost:9092"}})
 
@@ -104,8 +125,9 @@ sink_tn = (
     .sink_fun(lancedb_upsert_sink, "sink")
 )
 
-topology = Streams.build(sink_tn)
-stop_streams = Streams.start_streams(topology)
+tn = Streams.build(sink_tn)
+tn.from_zSet(Streams._to_records)
+stop_streams = Streams.start_streams(tn)
 
 mcp = MCPServer("Driftless Agentic Memory Demo")
 
