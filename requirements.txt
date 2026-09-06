@@ -1,5 +1,11 @@
+# app.py
 fastembed==0.8.0
 fastmcp==4.0.3
 kafi==1.1.1
 lancedb==0.38.0
+
+# client.py
 mcp==2.1.1
+
+# driftless_retriever.py, retriever.py
+llama-index-core==0.14.24
