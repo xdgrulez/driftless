@@ -6,3 +6,8 @@ lancedb==0.38.0
 
 # client.py
 mcp==2.1.1
+
+# chat.py
+llama-index-core==0.14.24
+llama-index-llms-ollama==0.11.0
+llama-index-tools-mcp==0.6.0

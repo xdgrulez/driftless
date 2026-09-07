@@ -1,4 +1,4 @@
-from typing import TypedDict
+from typing import Optional, TypedDict
 
 import lancedb
 from lancedb.embeddings import get_registry
@@ -132,11 +132,16 @@ stop_streams = Streams.start_streams(tn)
 mcp = MCPServer("Driftless Agentic Memory Demo")
 
 @mcp.tool()
-def search_customer_context(customer_id: str, query: str, limit: int = 3) -> list[CustomerContextResult]:
-    results = table.search(query) \
-                   .where(f"customer_id = '{customer_id}'") \
-                   .limit(limit) \
-                   .to_list()
+def search_customer_context(query: str, customer_id: Optional[str] = None, limit: int = 3) -> list[CustomerContextResult]:
+    if customer_id:
+        results = table.search(query) \
+                    .where(f"customer_id = '{customer_id}'") \
+                    .limit(limit) \
+                    .to_list()
+    else:
+        results = table.search(query) \
+                    .limit(limit) \
+                    .to_list()
 
     return [
         {
