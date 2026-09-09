@@ -10,10 +10,10 @@ class ShoeProductGenerator:
     def __init__(self):
         self.product_dict_list = []
 
-    def generate_records(self, n_int=1):
-        r_list = []
+    def generate(self, n_int=1):
+        m_list = []
         #
-        while len(r_list) < n_int:
+        while len(m_list) < n_int:
             rand_int = random.randrange(10)
             #
             if rand_int <= 6 or self.product_dict_list == []: # insert
@@ -26,7 +26,9 @@ class ShoeProductGenerator:
                 #
                 v_r = {"before": None, "after": product_dict, "op": "c"}
                 #
-                r_list.append((k_r, v_r))
+                m = {"key": k_r, "value": v_r}
+                #
+                m_list.append(m)
             elif rand_int > 6 and rand_int <= 8: # update
                 product_index_int = random.randint(0, len(self.product_dict_list) - 1)
                 #
@@ -41,7 +43,9 @@ class ShoeProductGenerator:
                 #
                 v_r = {"before": old_product_dict, "after": product_dict, "op": "u"}
                 #
-                r_list.append((k_r, v_r))
+                m = {"key": k_r, "value": v_r}
+                #
+                m_list.append(m)
             else: # delete
                 product_index_int = random.randint(0, len(self.product_dict_list) - 1)
                 #
@@ -50,14 +54,16 @@ class ShoeProductGenerator:
                 #
                 v_r = {"before": product_dict, "after": None, "op": "d"}
                 #
-                r_list.append((k_r, v_r))
+                m = {"key": k_r, "value": v_r}
+                #
+                m_list.append(m)
         #
-        return r_list
+        return m_list
 
 if __name__ == "__main__":
     generator = ShoeProductGenerator()
     #
-    r_list = generator.generate_records(n_int=20)
+    m_list = generator.generate(n_int=20)
     #
-    for r in r_list:
-        print(r)
+    for m in m_list:
+        print(m)

@@ -28,7 +28,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Konfigurierbarer MCP Client")
     parser.add_argument("--url", default=DEFAULT_URL, help="MCP SSE Server URL")
-    parser.add_argument("--customer-id", default="c101", help="Kunden-ID")
+    parser.add_argument("--customer-id", default=None, help="Kunden-ID")
     parser.add_argument("--query", default="Lieferstatus der Bestellung", help="Suchanfrage")
     
     args = parser.parse_args()

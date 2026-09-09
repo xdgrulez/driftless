@@ -21,23 +21,23 @@ status_id_int_status_str_dict = {
 
 class ShoeOrderGenerator:
     def __init__(self):
-        self.order_id_int = 1
-        self.order_id_step_int = 1
+        self.id_int = 1
+        self.id_step_int = 1
         #
         self.ts_int = 1788854186242 # Sep 8, 2026
-        self.ts_step_int = 10000
+        self.ts_step_int = 1000
         #
-        self.order_id_int_order_dict_dict = {}
+        self.id_int_order_dict_dict = {}
 
-    def generate_records(self, n_int=1):
-        r_list = []
+    def generate(self, n_int=1):
+        m_list = []
         #
-        while len(r_list) < n_int:
+        while len(m_list) < n_int:
             rand_int = random.randrange(10)
             #
-            if rand_int <= 4 or self.order_id_int_order_dict_dict == {}: # insert
+            if rand_int <= 4 or self.id_int_order_dict_dict == {}: # insert
                 order_dict = {
-                    "id": self.order_id_int,
+                    "id": self.id_int,
                     "product_id": random.choice(product_id_str_list),
                     "customer_id": random.choice(customer_id_str_list),
                     "status_id": 0,
@@ -45,20 +45,22 @@ class ShoeOrderGenerator:
                     "ts": self.ts_int
                 }
                 #
-                self.order_id_int_order_dict_dict[self.order_id_int] = copy.deepcopy(order_dict)
+                self.id_int_order_dict_dict[self.id_int] = copy.deepcopy(order_dict)
                 #
-                self.order_id_int += self.order_id_step_int
+                self.id_int += self.id_step_int
                 self.ts_int += self.ts_step_int
                 #
                 k_r = str(order_dict["id"])
                 #
                 v_r = {"before": None, "after": order_dict, "op": "c"}
                 #
-                r_list.append((k_r, v_r))
-            elif rand_int > 4 and rand_int <= 8: # update
-                order_id_int = random.choice(list(self.order_id_int_order_dict_dict.keys()))
+                m = {"key": k_r, "value": v_r}
                 #
-                old_order_dict = self.order_id_int_order_dict_dict[order_id_int]
+                m_list.append(m)
+            elif rand_int > 4 and rand_int <= 8: # update
+                id_int = random.choice(list(self.id_int_order_dict_dict.keys()))
+                #
+                old_order_dict = self.id_int_order_dict_dict[id_int]
                 #
                 order_dict = copy.deepcopy(old_order_dict)
                 #
@@ -74,18 +76,20 @@ class ShoeOrderGenerator:
                     #
                     order_dict["ts"] = self.ts_int
                     #
-                    self.order_id_int_order_dict_dict[order_id_int] = order_dict
+                    self.id_int_order_dict_dict[id_int] = order_dict
                     #
-                    k_r = str(order_id_int)
+                    k_r = str(id_int)
                     #
                     v_r = {"before": old_order_dict, "after": order_dict, "op": "u"}
                     #
-                    r_list.append((k_r, v_r))
+                    m = {"key": k_r, "value": v_r}
+                    #
+                    m_list.append(m)
             else: # delete
-                order_id_int = random.choice(list(self.order_id_int_order_dict_dict.keys()))
+                id_int = random.choice(list(self.id_int_order_dict_dict.keys()))
                 #
-                order_dict = self.order_id_int_order_dict_dict[order_id_int]
-                del self.order_id_int_order_dict_dict[order_id_int]
+                order_dict = self.id_int_order_dict_dict[id_int]
+                del self.id_int_order_dict_dict[id_int]
                 #
                 self.ts_int += self.ts_step_int
                 #
@@ -93,14 +97,16 @@ class ShoeOrderGenerator:
                 #
                 v_r = {"before": order_dict, "after": None, "op": "d"}
                 #
-                r_list.append((k_r, v_r))
+                m = {"key": k_r, "value": v_r}
+                #
+                m_list.append(m)
         #
-        return r_list
+        return m_list
 
 if __name__ == "__main__":
     generator = ShoeOrderGenerator()
     #
-    r_list = generator.generate_records(n_int=20)
+    m_list = generator.generate(n_int=20)
     #
-    for r in r_list:
-        print(r)
+    for m in m_list:
+        print(m)

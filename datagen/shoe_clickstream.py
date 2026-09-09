@@ -13,12 +13,12 @@ from datagen.constants.ips import ip_str_list
 class ShoeClickstreamGenerator:
     def __init__(self):
         self.ts_int = 1788854186242  # Sep 8, 2026
-        self.ts_step_int = 1000
+        self.ts_step_int = 100
 
-    def generate_records(self, n_int=1):
-        r_list = []
+    def generate(self, n_int=1):
+        m_list = []
         #
-        while len(r_list) < n_int:
+        while len(m_list) < n_int:
             k_r = None
             #
             click_dict = {
@@ -33,14 +33,16 @@ class ShoeClickstreamGenerator:
             #
             self.ts_int += self.ts_step_int
             #
-            r_list.append((k_r, v_r))
+            m = {"key": k_r, "value": v_r}
+            #
+            m_list.append(m)
         #
-        return r_list
+        return m_list
 
 if __name__ == "__main__":
     generator = ShoeClickstreamGenerator()
     #
-    r_list = generator.generate_records(n_int=20)
+    m_list = generator.generate(n_int=20)
     #
-    for r in r_list:
-        print(r)
+    for m in m_list:
+        print(m)
