@@ -28,14 +28,17 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Konfigurierbarer MCP Client")
     parser.add_argument("--url", default=DEFAULT_URL, help="MCP SSE Server URL")
-    parser.add_argument("--customer-id", default=None, help="Kunden-ID")
-    parser.add_argument("--query", default="Lieferstatus der Bestellung", help="Suchanfrage")
+    parser.add_argument("--id", default=None, help="Order ID")
+    parser.add_argument("--customer-id", default=None, help="Customer ID")
+    parser.add_argument("--customer-name", default=None, help="Customer name")
+    parser.add_argument("--query", default=None, help="Query")
     
     args = parser.parse_args()
 
-    # Tool-Argumente dynamisch aufbauen
     tool_args = {
+        "id": args.id,
         "customer_id": args.customer_id,
+        "customer_name": args.customer_name,
         "query": args.query
     }
 
