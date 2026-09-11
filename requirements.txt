@@ -5,7 +5,7 @@ kafi==1.1.1
 lancedb==0.38.0
 
 # client.py
-mcp==2.1.1
+mcp==2.2.0
 
 # chat.py
 llama-index-core==0.14.24

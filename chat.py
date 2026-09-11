@@ -15,24 +15,25 @@ from llama_index.tools.mcp import BasicMCPClient, McpToolSpec
 
 MCP_SSE_URL = "http://localhost:8000/sse"
 
-# Kompatibilitäts-Patch: mcp v2 nennt das Feld input_schema (snake_case),
-# llama-index-tools-mcp 0.6.0 greift noch auf inputSchema (camelCase) zu.
 if not hasattr(types.Tool, "inputSchema"):
     types.Tool.inputSchema = property(lambda self: self.input_schema)
 
-SYSTEM_PROMPT = """Du bist ein Assistent mit Zugriff auf ein Tool namens
-`search_customer_context`, das frühere Bestellungen eines Kunden
-per semantischer Suche in einer Vektordatenbank findet.
+SYSTEM_PROMPT = """You are an assistent with access to a tool called
+`search_customer_context`, that can do look-ups in a vector database.
 
-Das Tool benötigt:
-- query (string): die Suchanfrage in natürlicher Sprache
-- customer_id (string): die ID des Kunden, für den gesucht wird (optional)
-- limit (int, optional): maximale Anzahl Ergebnisse (Standard 3)
+The tool has the following signature:
+search_customer_context(query: Optional[str] = None, id: Optional[str] = None, customer_id: Optional[str] = None, customer_name: Optional[str] = None, limit: int = 3) -> list[CustomerContextResult]
 
-Wenn der Nutzer keine customer_id in seiner Nachricht angibt, frage
-danach, bevor du das Tool aufrufst. Erfinde niemals eine customer_id.
-Fasse die Ergebnisse des Tools verständlich zusammen (Bestellnummer,
-Status, Betrag), anstatt die Rohdaten unverändert auszugeben.
+- query: the query (similarity seaech)
+- id: the order ID (exact column filter)
+- customer_id: the customer ID (exact column filter)
+- customer_name: the customer name (substring column filter)
+- limit: maximum number of results (default: 3)
+
+where you need to summarize the output list of CustomerContextResult entries (use the score only for internal purposes):
+class CustomerContextResult(TypedDict):
+    summary: str
+    score: float
 """
 
 
@@ -41,10 +42,10 @@ def ts() -> str:
 
 
 async def start_chat():
-    print(f"[{ts()}] Verbinde mit MCP-Server...")
+    print(f"[{ts()}] Connecting to MCP server...")
 
     llm = Ollama(
-        model="llama3.2:1b",
+        model="qwen2.5:1.5b-instruct",
         request_timeout=120.0,
         additional_kwargs={"stop": ["Observation:"]},
     )
@@ -54,15 +55,15 @@ async def start_chat():
         mcp_client = BasicMCPClient(MCP_SSE_URL)
         mcp_tool_spec = McpToolSpec(client=mcp_client)
         tools = await mcp_tool_spec.to_tool_list_async()
-        print(f"[{ts()}] MCP-Tools geladen in {time.time() - t0:.2f}s")
+        print(f"[{ts()}] MCP-Tools loaded in {time.time() - t0:.2f}s")
     except Exception as e:
-        print(f"[{ts()}] Fehler bei der Verbindung zum MCP-Server: {e}")
+        print(f"[{ts()}] Error connecting to MCP server: {e}")
         return
 
     if not tools:
-        print(f"[{ts()}] Warnung: Es wurden keine Tools vom MCP-Server geladen.")
+        print(f"[{ts()}] Warning: No tools found on MCP server.")
     else:
-        print(f"[{ts()}] Geladene Tools:")
+        print(f"[{ts()}] Found tools:")
         for t in tools:
             print(f"  - {t.metadata.name}: {t.metadata.get_parameters_dict()}")
 
@@ -70,47 +71,46 @@ async def start_chat():
     ctx = Context(agent)
 
     print("\n" + "=" * 50)
-    print("Chat gestartet! Schreibe 'exit' oder 'quit' zum Beenden.")
+    print("Starting chat (type exit or quit to stop).")
     print("=" * 50 + "\n")
 
     while True:
         try:
-            user_input = input("Du: ").strip()
+            user_input = input("$ ").strip()
             if not user_input:
                 continue
             if user_input.lower() in ["exit", "quit"]:
-                print(f"[{ts()}] Chat beendet.")
+                print(f"[{ts()}] Chat stopped.")
                 break
 
-            print(f"[{ts()}] -> Sende an Agent, warte auf LLM (llama3.2:1b)...")
+            print(f"[{ts()}] -> Sending to agent server...")
             t0 = time.time()
 
             handler = agent.run(user_input, ctx=ctx)
 
             async for event in handler.stream_events():
                 if isinstance(event, AgentInput):
-                    print(f"[{ts()}] [Agent] Eingabe an LLM vorbereitet.")
+                    print(f"[{ts()}] [Agent] Prepared input for LLM.")
                 elif isinstance(event, AgentStream):
-                    # Token-für-Token-Ausgabe des LLM, live mitschreiben
                     print(event.delta, end="", flush=True)
                 elif isinstance(event, ToolCall):
                     print(
-                        f"\n[{ts()}] [Tool-Aufruf] {event.tool_name}({event.tool_kwargs})"
+                        f"\n[{ts()}] [Tool call] {event.tool_name}({event.tool_kwargs})"
                     )
                 elif isinstance(event, ToolCallResult):
-                    print(f"[{ts()}] [Tool-Ergebnis] {event.tool_output}")
+                    print(f"[{ts()}] [Tool result] {event.tool_output}")
                 elif isinstance(event, AgentOutput):
-                    print(f"\n[{ts()}] [Agent] Antwort fertig.")
+                    print(f"\n[{ts()}] [Agent] Response done.")
 
             response = await handler
-            print(f"[{ts()}] Fertig nach {time.time() - t0:.2f}s\n")
-            print(f"Assistant: {response}\n")
+            print(f"[{ts()}] Done after {time.time() - t0:.2f}s\n")
+            print(f"Assistent: {response}\n")
 
         except (KeyboardInterrupt, EOFError):
-            print(f"\n[{ts()}] Chat beendet.")
+            print(f"\n[{ts()}] Chat stopped.")
             break
         except Exception as e:
-            print(f"[{ts()}] Fehler bei der Verarbeitung: {e}\n")
+            print(f"[{ts()}] Error processing: {e}\n")
 
 
 if __name__ == "__main__":

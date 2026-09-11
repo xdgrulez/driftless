@@ -2,7 +2,7 @@ from typing import Optional, TypedDict
 
 from mcp.server.mcpserver import MCPServer
 
-from db.db import connect, create_table, get_sink_fun, search, embeddingFunction, table_str
+from db.db import connect, create_table, get_sink_fun, search
 from kafka.kafka import streams
 
 #
