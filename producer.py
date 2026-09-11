@@ -8,6 +8,9 @@ from datagen.shoes import ShoeProductGenerator
 
 #
 
+# "Connect" to emulated Kafka on local disk
+# c = Local({"kafka": {"root.dir": "/tmp"}})
+# Connect to a local Kafka cluster
 c = Cluster({"kafka": {"bootstrap.servers": "localhost:9092"}})
 
 order_str = "orders"
