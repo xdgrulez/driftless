@@ -17,17 +17,17 @@ stop_fun = streams(sink_fun, emulated=False)
 
 #
 
-mcp = MCPServer("Driftless Agentic Memory in One Pod")
+mcpServer = MCPServer("Driftless Agentic Memory in One Pod")
 
 class CustomerContextResult(TypedDict):
     summary: str
     score: float
 
-@mcp.tool()
+@mcpServer.tool()
 def search_customer_context(query: Optional[str] = None, id: Optional[str] = None, customer_id: Optional[str] = None, customer_name: Optional[str] = None, limit: int = 3) -> list[CustomerContextResult]:
     return search(dbConnection, query, id, customer_id, customer_name, limit)
 
 #
 
 if __name__ == "__main__":
-    mcp.run(transport="sse", port=8000)
+    mcpServer.run(transport="streamable-http", port=8000)
